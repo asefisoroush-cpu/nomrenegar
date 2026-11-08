@@ -1,0 +1,52 @@
+name: Build NomreNegar APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check project archive
+        run: |
+          test -f nomrenegar_android_project.zip || { echo "ERROR: Upload nomrenegar_android_project.zip to the repository root."; exit 1; }
+
+      - name: Extract project archive
+        run: |
+          mkdir -p _nomrenegar_archive
+          unzip -q nomrenegar_android_project.zip -d _nomrenegar_archive
+          test -f _nomrenegar_archive/nomrenegar/settings.gradle || { echo "ERROR: ZIP must contain nomrenegar/settings.gradle."; exit 1; }
+          cp -a _nomrenegar_archive/nomrenegar/. .
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        run: gradle --no-daemon clean assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nomrenegar-2.1.0-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
