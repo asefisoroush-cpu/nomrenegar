@@ -16,6 +16,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Unpack uploaded project ZIP when needed
+        run: |
+          if [ -f nomrenegar_android_project.zip ]; then
+            mkdir -p _project_archive
+            unzip -q nomrenegar_android_project.zip -d _project_archive
+            cp -an _project_archive/nomrenegar/. .
+          fi
       - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
